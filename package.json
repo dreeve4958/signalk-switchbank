@@ -1,0 +1,27 @@
+{
+  "name": "signalk-switchbank",
+  "version": "1.0.0",
+  "description": "Operate N2K switchbank relays from N2K switchbank switches",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/preeve9534/signalk-switchbank.git"
+  },
+  "keywords": [
+    "signalk-node-server-plugin",
+    "signalk-webapp",
+    "signalk",
+    "switchbank",
+    "plugin",
+    "NMEA"
+  ],
+  "author": "Paul Reeve <preeve@pdjr.eu>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/preeve9534/signalk-switchbank/issues"
+  },
+  "homepage": "https://github.com/preeve9534/signalk-switchbank#readme"
+}
