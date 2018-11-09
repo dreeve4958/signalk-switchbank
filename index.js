@@ -27,39 +27,61 @@ module.exports = function(app) {
 	plugin.name = "Switchbank";
 	plugin.description = "Operate N2K switchbank relays from N2K switchbank switches";
 
-	plugin.schema = function() {
-		return({	
-			type: "object",
-			properties: {
-				title: "Map",
-				type: "array",
-				default: [],
-				items: {
-					type: "object",
-					properties: {
-						switchpath: {
-							title: "Switch path",
-							type: "string",
-							default: ""
-						},
-						relaypath: {
-							title: "Relay path",
-							type: "string",
-							default: ""
-						},
-						mapping: {
-							title: "Mapping function",
-							type: "array",
-							items: {
-								type: "string",
-								enum: ["clone","invert"]
+	plugin.schema = {
+		"type": "object",
+		"properties": {
+			"title": "Rules...",
+			"type": "array",
+			"default": [],
+			"items": {
+				"title": "Rule",
+				"type": "object",
+				"properties": {
+					"switch": {
+						"title": "Switch",
+						"type": "object",
+						"properties": {
+							"switchbank": {
+								"title": "switchbank",
+								"type": "number",
+								"default": 0
 							},
-							uniqueItems: true
+							"channel": {
+								"title": "channel",
+								"type": "number",
+								"default": 0
+							}
 						}
+					},
+					"relays": {
+						"title": "Relays",
+						"type": "array",
+						"default": [],
+						"items": {
+							"title": "Relay",
+							"type": "object",
+							"properties": {
+								"switchbank": {
+									"title": "switchbank",
+									"type": "number",
+									"default": 0
+								},
+								"channel": {
+									"title": "channel",
+									"type": "number",
+									"default": 0
+								}
+							}
+						}
+					},
+					"comment": {
+						"title": "Comment",
+						"type": "string",
+						"default": ""
 					}
 				}
 			}
-		});
+		}
 	}
  
 	plugin.uiSchema = {
