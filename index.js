@@ -19,6 +19,8 @@ const exec = require('child_process').exec;
 const fs = require('fs');
 const bacon = require('baconjs');
 
+const MAPCONFIG = __dirname + "/switchbank.json";
+
 module.exports = function(app) {
 	var plugin = {};
 	var unsubscribes = [];
@@ -28,66 +30,84 @@ module.exports = function(app) {
 	plugin.description = "Operate N2K switchbank relays from N2K switchbank switches";
 
 	plugin.schema = {
-		"type": "object",
-		"properties": {
-			"title": "Rules...",
-			"type": "array",
-			"default": [],
-			"items": {
-				"title": "Rule",
-				"type": "object",
-				"properties": {
-					"switch": {
-						"title": "Switch",
-						"type": "object",
-						"properties": {
-							"switchbank": {
-								"title": "switchbank",
-								"type": "number",
-								"default": 0
-							},
-							"channel": {
-								"title": "channel",
-								"type": "number",
-								"default": 0
-							}
-						}
-					},
-					"relays": {
-						"title": "Relays",
-						"type": "array",
-						"default": [],
-						"items": {
-							"title": "Relay",
-							"type": "object",
-							"properties": {
-								"switchbank": {
-									"title": "switchbank",
-									"type": "number",
-									"default": 0
+		type: "object",
+		properties: {
+				rules: {
+				title: "Rules",
+				type: "array",
+				"default": loadMap(),
+				items: {
+					title: "Rule",
+					type: "object",
+					properties: {
+						"switch": {
+							title: "Switch",
+							type: "object",
+							properties: {
+								switchbank: {
+									title: "switchbank",
+									type: "number",
+									"default": "0"
 								},
-								"channel": {
-									"title": "channel",
-									"type": "number",
-									"default": 0
+								channel: {
+									title: "channel",
+									type: "number",
+									"default": "0"
 								}
 							}
+						},
+						relays: {
+							title: "Relays",
+							type: "array",
+							"default": [],
+							items: {
+								title: "Relay",
+								type: "object",
+								properties: {
+									switchbank: {
+										title: "switchbank",
+										type: "number",
+										"default": "0"
+									},
+									channel: {
+										title: "channel",
+										type: "number",
+										"default": "0"
+									}
+								}
+							}
+						},
+						comment: {
+							title: "Comment",
+							type: "string",
+							"default": ""
 						}
-					},
-					"comment": {
-						"title": "Comment",
-						"type": "string",
-						"default": ""
 					}
 				}
 			}
 		}
 	}
- 
+
 	plugin.uiSchema = {
 	}
 
 	plugin.start = function(options) {
+		if (options.rules.length == 0) {
+			logE("no rules to process");
+			return;
+		} else {
+			logN("Processing " + options.rules.length + " rules");
+			try {
+				var stream = app.streambundle.getSelfStream("electrical.switches.*");
+				logN("Got " + (stream !== undefined) + " streams");
+				if (stream !== undefined) {
+					unsubscribes.push(stream.onValue(function(v) {
+						logN(JSON.stringify(v));
+					}));
+				}
+			} catch(err) {
+			}
+		}
 	}
 
 	plugin.stop = function() {
@@ -96,6 +116,16 @@ module.exports = function(app) {
 	}
 
 	function loadMap() {
+		try {
+			var content = fs.readFileSync(MAPCONFIG).toString();
+			try {
+				return(JSON.parse(content));
+			} catch(err) {
+				logE("error parsing configuration file");
+			}
+		} catch(err) {
+			logE("cannot access configuration file");
+		}
 		return([]);
 	}
 
@@ -110,8 +140,5 @@ module.exports = function(app) {
 	function logW(terse, verbose) { log("warning", terse, (verbose === undefined)?terse:verbose); }
 	function logN(terse, verbose) { log("notice", terse, (verbose === undefined)?terse:verbose); }
 
-
 	return plugin;
 }
-
-
