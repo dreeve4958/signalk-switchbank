@@ -7,9 +7,18 @@ body {
     display: none;
 }
 
+.rowhead {
+    font-weight: bold;
+    vertical-align: top;
+}
+
 .channel {
     width: 60px;
     height: 40px;
+    font-size: 8pt;
+    font-weight: bold;
+    color: #101010;
+    text-align: center;
 }
 
 .channel-off {

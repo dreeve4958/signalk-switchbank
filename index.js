@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-const execSync = require('child_process').execSync;
-const exec = require('child_process').exec;
 const fs = require('fs');
 const bacon = require('baconjs');
 const Log = require("./lib/log.js");
@@ -24,7 +22,6 @@ const nmea2000 = require("./lib/nmea2000.js");
 
 const PLUGIN_SCHEMA_FILE = __dirname + "/schema.json";
 const PLUGIN_UISCHEMA_FILE = __dirname + "/uischema.json";
-const PLUGIN_SCRIPT_DIRECTORY = __dirname + "/script";
 const DEBUG = false;
 
 module.exports = function(app) {
