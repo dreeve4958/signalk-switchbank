@@ -18,8 +18,14 @@ const execSync = require('child_process').execSync;
 const exec = require('child_process').exec;
 const fs = require('fs');
 const bacon = require('baconjs');
+const Log = require("./lib/log.js");
+const Schema = require("./lib/schema.js");
+const nmea2000 = require("./lib/nmea2000.js");
 
-const MAPCONFIG = __dirname + "/switchbank.json";
+const PLUGIN_SCHEMA_FILE = __dirname + "/schema.json";
+const PLUGIN_UISCHEMA_FILE = __dirname + "/uischema.json";
+const PLUGIN_SCRIPT_DIRECTORY = __dirname + "/script";
+const DEBUG = false;
 
 module.exports = function(app) {
 	var plugin = {};
@@ -29,116 +35,62 @@ module.exports = function(app) {
 	plugin.name = "Switchbank";
 	plugin.description = "Operate N2K switchbank relays from N2K switchbank switches";
 
-	plugin.schema = {
-		type: "object",
-		properties: {
-				rules: {
-				title: "Rules",
-				type: "array",
-				"default": loadMap(),
-				items: {
-					title: "Rule",
-					type: "object",
-					properties: {
-						"switch": {
-							title: "Switch",
-							type: "object",
-							properties: {
-								switchbank: {
-									title: "switchbank",
-									type: "number",
-									"default": "0"
-								},
-								channel: {
-									title: "channel",
-									type: "number",
-									"default": "0"
-								}
-							}
-						},
-						relays: {
-							title: "Relays",
-							type: "array",
-							"default": [],
-							items: {
-								title: "Relay",
-								type: "object",
-								properties: {
-									switchbank: {
-										title: "switchbank",
-										type: "number",
-										"default": "0"
-									},
-									channel: {
-										title: "channel",
-										type: "number",
-										"default": "0"
-									}
-								}
-							}
-						},
-						comment: {
-							title: "Comment",
-							type: "string",
-							"default": ""
-						}
-					}
-				}
-			}
-		}
-	}
+    const log = new Log(app.setProviderStatus, app.setProviderError, plugin.id);
 
-	plugin.uiSchema = {
-	}
+	plugin.schema = function() {
+        var schema = Schema.createSchema(PLUGIN_SCHEMA_FILE);
+        return(schema.getSchema());
+    };
+
+	plugin.uiSchema = function() {
+        var schema = Schema.createSchema(PLUGIN_UISCHEMA_FILE);
+        return(schema.getSchema());
+    }
 
 	plugin.start = function(options) {
-		if (options.rules.length == 0) {
-			logE("no rules to process");
-			return;
-		} else {
-			logN("Processing " + options.rules.length + " rules");
-			try {
-				var stream = app.streambundle.getSelfStream("electrical.switches.*");
-				logN("Got " + (stream !== undefined) + " streams");
-				if (stream !== undefined) {
-					unsubscribes.push(stream.onValue(function(v) {
-						logN(JSON.stringify(v));
-					}));
-				}
-			} catch(err) {
-			}
-		}
-	}
+
+        var switchbanks = options.switchbanks.reduce((a,s) => { a[s['instance']] = (new Array(s['channels'])).fill(0); return(a); }, {});
+        log.N("connected to " + Object.keys(switchbanks).length + " switch bank(s)");
+        fs.writeFileSync(__dirname + "/public/manifest.json", JSON.stringify(options));
+        
+
+        unsubscribes = (options.rules || []).map(({ switchpath, relaypath, comment }) => {
+            var switchstream = app.streambundle.getSelfStream(switchpath).skipDuplicates();
+            var switchinstance = getInstance(switchpath);
+            var switchchannel = getChannel(switchpath) - 1;
+            var relaystream = app.streambundle.getSelfStream(relaypath).skipDuplicates();
+            var relayinstance = getInstance(relaypath);
+            var relaychannel = getChannel(relaypath) - 1;
+            return(
+                bacon.combineWith(
+                    (sv,rv) => [ sv, rv, ((sv == rv)?0:((sv > rv)?1:-1)) ],
+                    switchstream,
+                    relaystream
+                ).onValue(([sv, rv, action]) => {
+                    //console.log(">>>> Updating switchbank " + relayinstance + ", channel " + relaychannel);
+                    switchbanks[switchinstance][switchchannel] = sv;
+                    switchbanks[relayinstance][relaychannel] = rv;
+                    fs.writeFileSync(__dirname + "/public/state.json", JSON.stringify(switchbanks));
+                    
+                    if (action != 0) {
+                        var buffer = Array.from(switchbanks[relayinstance]);
+                        buffer[relaychannel] = sv;
+                        var message = nmea2000.makeMessagePGN127502(relayinstance, buffer);
+                        //console.log(">>>> Sending NMEA message " + message);
+                        app.emit('nmea2000out', message)
+                    }
+                })
+            );
+        });
+    }
+
+    function getInstance(path) { return(path.split('.')[2]); }
+    function getChannel(path) { return(path.split('.')[3]); }
 
 	plugin.stop = function() {
 		unsubscribes.forEach(f => f());
 		unsubscribes = [];
 	}
-
-	function loadMap() {
-		try {
-			var content = fs.readFileSync(MAPCONFIG).toString();
-			try {
-				return(JSON.parse(content));
-			} catch(err) {
-				logE("error parsing configuration file");
-			}
-		} catch(err) {
-			logE("cannot access configuration file");
-		}
-		return([]);
-	}
-
-	function log(prefix, terse, verbose) {
-		if (verbose) console.log(plugin.id + ": " + prefix + ": " + verbose);
-		if (terse) {
-			if (prefix !== "error") { app.setProviderStatus(terse); } else { app.setProviderError(terse); }
-		}
-	}
-
-	function logE(terse, verbose) { log("error", terse, (verbose === undefined)?terse:verbose); }
-	function logW(terse, verbose) { log("warning", terse, (verbose === undefined)?terse:verbose); }
-	function logN(terse, verbose) { log("notice", terse, (verbose === undefined)?terse:verbose); }
 
 	return plugin;
 }

@@ -1,0 +1,21 @@
+body {
+    background-color: black;
+    color: #ff7f7f;
+}
+
+#error {
+    display: none;
+}
+
+.channel {
+    width: 60px;
+    height: 40px;
+}
+
+.channel-off {
+    background: grey;
+}
+
+.channel-on {
+    background: red;
+}

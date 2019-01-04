@@ -1,0 +1,75 @@
+{
+    "type": "object",
+    "properties": {
+        "switchbanks" : {
+            "title": "Switch banks",
+            "type": "array",
+            "default": [],
+            "items": {
+                "type": "object",
+                "properties": {
+                    "instance": {
+                        "title": "Instance",
+                        "type": "number",
+                        "default": ""
+                    },
+                    "type": {
+                        "title": "Type",
+                        "type": "array",
+                        "default": [],
+                        "items": {
+                            "type": "string",
+                            "enum": [ "switch", "relay", "hybrid" ]
+                        },
+                        "uniqueItems": true
+                    },
+                    "channels": {
+                        "title": "No of channels",
+                        "type": "number",
+                        "default": ""
+                    },
+                    "description": {
+                        "title": "Description",
+                        "type": "string",
+                        "default": ""
+                    }
+                }
+            }
+        },
+        "rules": {
+            "title": "Rules",
+            "type": "array",
+            "default": [{ "switchpath": "", "relaypath": "", "comment": "" }],
+            "items": {
+                "type": "object",
+                "properties": {
+                    "switchpath": {
+                        "title": "Switch path",
+                        "type": "string",
+                        "default": ""
+                    },
+                    "relaypath" : {
+                        "title": "Relay path",
+                        "type": "string",
+                        "default": ""
+                    },
+                    "comment": {
+                        "title": "Comment",
+                        "type": "string",
+                        "default": ""
+                    }
+                }
+            }
+        },
+        "logging": {
+            "title": "Logging options",
+            "type": "object",
+            "properties": {
+                "console": {
+                },
+                "syslog": {
+                }
+            }
+        }
+    }
+}

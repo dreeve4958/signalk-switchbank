@@ -1,0 +1,31 @@
+{
+    "switchbanks": {
+        "items": {
+            "instance": {
+                "classNames": "col-sm-2"
+            },
+            "type": {
+                "classNames": "col-sm-2"
+            },
+            "channels": {
+                "classNames": "col-sm-3"
+            },
+            "description": {
+                "classNames": "col-sm-5"
+            }
+        }
+    },
+	"rules": {
+		"items": {
+            "switchpath": {
+                "classNames": "col-sm-4"
+            },         
+            "relaypath": {
+                "classNames": "col-sm-4"
+            },         
+            "comment": {
+                "classNames": "col-sm-4"
+            }         
+        }
+    }
+}
